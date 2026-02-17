@@ -12,10 +12,14 @@ function App() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleEmailLogin = async (event) => {
     event.preventDefault();
+    if (isEmailLoading || isGoogleLoading) return;
+    setIsEmailLoading(true);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
       setUser(result.user);
@@ -24,10 +28,14 @@ function App() {
     } catch (error) {
       console.error('Login failed:', error);
       setError(error.message);
+    } finally {
+      setIsEmailLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (isEmailLoading || isGoogleLoading) return;
+    setIsGoogleLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       setUser(result.user);
@@ -36,6 +44,8 @@ function App() {
     } catch (error) {
       console.error('Login failed:', error);
       setError(error.message);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -91,9 +101,20 @@ function App() {
 
             <button
               type="submit"
-              className="font-display w-full bg-pink-400 text-white font-medium py-3 rounded-2xl hover:bg-pink-500 transition-all shadow-md active:scale-95 font-brand cursor-pointer"
+              disabled={isEmailLoading || isGoogleLoading}
+              className="relative overflow-hidden font-display w-full bg-pink-400 text-white font-medium py-3 rounded-2xl hover:bg-pink-500 transition-all shadow-md active:scale-95 font-brand cursor-pointer disabled:cursor-not-allowed disabled:opacity-80"
             >
-              Login
+              <span className={isEmailLoading ? 'opacity-0' : ''}>Login</span>
+              {isEmailLoading && (
+                <span className="absolute inset-0 flex items-center justify-center gap-2 bg-white/30 backdrop-blur-sm text-white font-display font-bold pointer-events-none">
+                  <span>Logging in</span>
+                  <span className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse" />
+                  </span>
+                </span>
+              )}
             </button>
           </form>
         </div>

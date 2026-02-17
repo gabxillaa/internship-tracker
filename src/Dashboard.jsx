@@ -25,6 +25,17 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }) => {
   );
 };
 
+const LoadingOverlay = ({ label }) => (
+  <span className="absolute inset-0 flex items-center justify-center gap-2 bg-white/30 backdrop-blur-sm text-white font-display font-bold pointer-events-none">
+    <span>{label}</span>
+    <span className="flex items-center gap-1">
+      <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse" />
+      <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse" />
+      <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse" />
+    </span>
+  </span>
+);
+
 function Dashboard({ user, onLogout }) {
   const [shifts, setShifts] = useState([]);
   const [activeShift, setActiveShift] = useState(null);
@@ -47,6 +58,11 @@ function Dashboard({ user, onLogout }) {
   const [dtrLoading, setDtrLoading] = useState(false);
   const [isDtrDeleteOpen, setIsDtrDeleteOpen] = useState(false);
   const [dtrDeleteId, setDtrDeleteId] = useState(null);
+  const [isClockLoading, setIsClockLoading] = useState(false);
+  const [isEditSaving, setIsEditSaving] = useState(false);
+  const [isDeleteSaving, setIsDeleteSaving] = useState(false);
+  const [isDtrSaving, setIsDtrSaving] = useState(false);
+  const [isDtrDeleteSaving, setIsDtrDeleteSaving] = useState(false);
 
   const openNativePicker = (event) => {
     event?.target?.showPicker?.();
@@ -100,6 +116,8 @@ function Dashboard({ user, onLogout }) {
 
   // 3. Handlers
   const handleClockToggle = async () => {
+    if (isClockLoading) return;
+    setIsClockLoading(true);
     try {
       if (!activeShift) {
         await addDoc(collection(db, "shifts"), {
@@ -118,6 +136,7 @@ function Dashboard({ user, onLogout }) {
         });
       }
     } catch (err) { setError('Clock action failed.'); }
+    finally { setIsClockLoading(false); }
   };
 
   const handleEditClick = (shift) => {
@@ -140,6 +159,8 @@ function Dashboard({ user, onLogout }) {
   };
 
   const handleSaveEdit = async () => {
+    if (isEditSaving) return;
+    setIsEditSaving(true);
     try {
       const combine = (d, t) => Timestamp.fromDate(parse(`${d} ${t}`, 'yyyy-MM-dd HH:mm', new Date()));
       await updateDoc(doc(db, "shifts", selectedShiftId), {
@@ -150,16 +171,21 @@ function Dashboard({ user, onLogout }) {
       });
       setIsEditOpen(false);
     } catch (err) { setError("Update failed."); }
+    finally { setIsEditSaving(false); }
   };
 
   const confirmDelete = async () => {
+    if (isDeleteSaving) return;
+    setIsDeleteSaving(true);
     try {
       await deleteDoc(doc(db, "shifts", selectedShiftId));
       setIsDeleteOpen(false);
     } catch (err) { setError("Delete failed."); }
+    finally { setIsDeleteSaving(false); }
   };
 
   const handleSaveDtr = async () => {
+    if (isDtrSaving) return;
     if (!dtrShiftId) return;
     if (!dtrEditingId && dtrEndTime && dtrEntries.some((entry) => entry.time === dtrEndTime)) {
       setError('DTR is complete for the day.');
@@ -182,6 +208,7 @@ function Dashboard({ user, onLogout }) {
     };
 
     try {
+      setIsDtrSaving(true);
       if (dtrEditingId) {
         await updateDoc(doc(db, "shifts", dtrShiftId, "dtrEntries", dtrEditingId), payload);
       } else {
@@ -193,6 +220,7 @@ function Dashboard({ user, onLogout }) {
       setDtrEditingId(null);
       setDtrForm({ company: DEFAULT_COMPANY, time: DTR_FALLBACK_TIME, description: '' });
     } catch (err) { setError('Failed to save DTR entry.'); }
+    finally { setIsDtrSaving(false); }
   };
 
   const handleEditDtr = (entry) => {
@@ -211,11 +239,14 @@ function Dashboard({ user, onLogout }) {
 
   const confirmDeleteDtr = async () => {
     if (!dtrShiftId || !dtrDeleteId) return;
+    if (isDtrDeleteSaving) return;
+    setIsDtrDeleteSaving(true);
     try {
       await deleteDoc(doc(db, "shifts", dtrShiftId, "dtrEntries", dtrDeleteId));
       setIsDtrDeleteOpen(false);
       setDtrDeleteId(null);
     } catch (err) { setError('Failed to delete DTR entry.'); }
+    finally { setIsDtrDeleteSaving(false); }
   };
 
   const shiftStartTime = dtrShiftId
@@ -275,9 +306,13 @@ function Dashboard({ user, onLogout }) {
           <button 
             onClick={handleClockToggle}
             title={activeShift ? 'Clock out' : 'Clock in'}
-            className={`font-display px-12 py-5 rounded-full font-black text-2xl text-white shadow-lg transition-all active:scale-95 cursor-pointer transform hover:-translate-y-1 ${activeShift ? 'bg-orange-400 hover:bg-orange-500' : 'bg-pink-500 hover:bg-pink-600'}`}
+            disabled={isClockLoading}
+            className={`relative overflow-hidden font-display px-12 py-5 rounded-full font-black text-2xl text-white shadow-lg transition-all active:scale-95 cursor-pointer transform hover:-translate-y-1 disabled:cursor-not-allowed disabled:opacity-80 ${activeShift ? 'bg-orange-400 hover:bg-orange-500' : 'bg-pink-500 hover:bg-pink-600'}`}
           >
-            {activeShift ? 'Clock Out' : 'Clock In'}
+            <span className={isClockLoading ? 'opacity-0' : ''}>{activeShift ? 'Clock Out' : 'Clock In'}</span>
+            {isClockLoading && (
+              <LoadingOverlay label={activeShift ? 'Clocking out' : 'Clocking in'} />
+            )}
           </button>
           {error && <p className="mt-4 text-red-500 font-bold text-sm bg-red-50 py-2 px-4 rounded-xl inline-block">{error}</p>}
           {activeShift && <p className="font-reader mt-4 text-orange-400 animate-pulse font-bold text-sm tracking-wide">You are currently on the clock! ⏳</p>}
@@ -347,7 +382,14 @@ function Dashboard({ user, onLogout }) {
             <label className="text-xs font-bold text-pink-400 uppercase ml-2">Net Hours</label>
             <input type="number" step="0.1" value={editData.netHours} onChange={(e) => setEditData({...editData, netHours: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 bg-pink-50/30 font-bold text-pink-600" />
           </div>
-          <button onClick={handleSaveEdit} className="cursor-pointer w-full py-4 bg-pink-500 text-white rounded-2xl font-display font-black text-xl shadow-lg hover:bg-pink-600 transition-all active:scale-95">Update Magic ✨</button>
+          <button
+            onClick={handleSaveEdit}
+            disabled={isEditSaving}
+            className="relative overflow-hidden cursor-pointer w-full py-4 bg-pink-500 text-white rounded-2xl font-display font-black text-xl shadow-lg hover:bg-pink-600 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-80"
+          >
+            <span className={isEditSaving ? 'opacity-0' : ''}>Update Magic ✨</span>
+            {isEditSaving && <LoadingOverlay label="Updating" />}
+          </button>
         </div>
       </Modal>
 
@@ -358,7 +400,14 @@ function Dashboard({ user, onLogout }) {
           <p className="font-reader text-gray-500 mb-8 px-4">Are you sure you want to erase this memory? This action cannot be undone!</p>
           <div className="flex gap-4">
             <button onClick={() => setIsDeleteOpen(false)} className="cursor-pointer flex-1 py-3 rounded-2xl border-2 border-gray-100 text-gray-400 font-display font-bold hover:bg-gray-50 hover:text-gray-500 transition-colors">Keep it</button>
-            <button onClick={confirmDelete} className="cursor-pointer flex-1 py-3 rounded-2xl bg-red-400 text-white font-display font-bold hover:bg-red-500 shadow-lg shadow-red-100 transition-colors">Delete 🥕</button>
+            <button
+              onClick={confirmDelete}
+              disabled={isDeleteSaving}
+              className="relative overflow-hidden cursor-pointer flex-1 py-3 rounded-2xl bg-red-400 text-white font-display font-bold hover:bg-red-500 shadow-lg shadow-red-100 transition-colors disabled:cursor-not-allowed disabled:opacity-80"
+            >
+              <span className={isDeleteSaving ? 'opacity-0' : ''}>Delete 🥕</span>
+              {isDeleteSaving && <LoadingOverlay label="Deleting" />}
+            </button>
           </div>
         </div>
       </Modal>
@@ -392,9 +441,11 @@ function Dashboard({ user, onLogout }) {
                 <div className="md:col-span-1 flex items-end">
                   <button
                     onClick={handleSaveDtr}
-                    className="cursor-pointer w-full py-3 bg-pink-500 text-white rounded-2xl font-display font-black shadow-lg hover:bg-pink-600 transition-all active:scale-95"
+                    disabled={isDtrSaving}
+                    className="relative overflow-hidden cursor-pointer w-full py-3 bg-pink-500 text-white rounded-2xl font-display font-black shadow-lg hover:bg-pink-600 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-80"
                   >
-                    {dtrEditingId ? 'Update Entry' : 'Add Entry'}
+                    <span className={isDtrSaving ? 'opacity-0' : ''}>{dtrEditingId ? 'Update Entry' : 'Add Entry'}</span>
+                    {isDtrSaving && <LoadingOverlay label="Saving" />}
                   </button>
                 </div>
               </div>
@@ -449,7 +500,14 @@ function Dashboard({ user, onLogout }) {
           <p className="font-reader text-gray-500 mb-8 px-4">Are you sure you want to delete this DTR entry? This action cannot be undone.</p>
           <div className="flex gap-4">
             <button onClick={() => setIsDtrDeleteOpen(false)} className="cursor-pointer flex-1 py-3 rounded-2xl border-2 border-gray-100 text-gray-400 font-display font-bold hover:bg-gray-50 hover:text-gray-500 transition-colors">Cancel</button>
-            <button onClick={confirmDeleteDtr} className="cursor-pointer flex-1 py-3 rounded-2xl bg-red-400 text-white font-display font-bold hover:bg-red-500 shadow-lg shadow-red-100 transition-colors">Delete</button>
+            <button
+              onClick={confirmDeleteDtr}
+              disabled={isDtrDeleteSaving}
+              className="relative overflow-hidden cursor-pointer flex-1 py-3 rounded-2xl bg-red-400 text-white font-display font-bold hover:bg-red-500 shadow-lg shadow-red-100 transition-colors disabled:cursor-not-allowed disabled:opacity-80"
+            >
+              <span className={isDtrDeleteSaving ? 'opacity-0' : ''}>Delete</span>
+              {isDtrDeleteSaving && <LoadingOverlay label="Deleting" />}
+            </button>
           </div>
         </div>
       </Modal>
