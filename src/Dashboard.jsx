@@ -241,7 +241,7 @@ function Dashboard({ user, onLogout }) {
             <h1 className="font-display font-black text-3xl text-pink-500 tracking-tight">Bunny Portal 🥕</h1>
             <p className="text-pink-400 font-reader font-bold">Welcome, {user?.displayName || 'Intern'}</p>
           </div>
-          <button onClick={onLogout} className="text-pink-300 hover:text-pink-500 underline text-sm font-bold cursor-pointer font-reader transition-colors">Log out</button>
+          <button onClick={onLogout} title="Log out" className="text-pink-300 hover:text-pink-500 underline text-sm font-bold cursor-pointer font-reader transition-colors">Log out</button>
         </div>
 
         {/* --- STATS CARDS (RESTORED) --- */}
@@ -270,6 +270,7 @@ function Dashboard({ user, onLogout }) {
         <div className="text-center mb-12">
           <button 
             onClick={handleClockToggle}
+            title={activeShift ? 'Clock out' : 'Clock in'}
             className={`font-display px-12 py-5 rounded-full font-black text-2xl text-white shadow-lg transition-all active:scale-95 cursor-pointer transform hover:-translate-y-1 ${activeShift ? 'bg-orange-400 hover:bg-orange-500' : 'bg-pink-500 hover:bg-pink-600'}`}
           >
             {activeShift ? 'Clock Out' : 'Clock In'}
@@ -292,24 +293,38 @@ function Dashboard({ user, onLogout }) {
             <tbody className="font-reader divide-y divide-pink-50">
               {shifts.map((shift) => (
                 <tr key={shift.id} className="group hover:bg-white/80 transition-colors">
-                  <td className="px-6 py-4 text-gray-600 font-bold">{shift.date}</td>
-                  <td className="px-6 py-4 text-gray-400 text-xs font-semibold">
+                  <td
+                    className="px-6 py-4 text-gray-600 font-bold cursor-pointer"
+                    onClick={() => handleEditClick(shift)}
+                    title="Edit shift"
+                  >
+                    {shift.date}
+                  </td>
+                  <td
+                    className="px-6 py-4 text-gray-400 text-xs font-semibold cursor-pointer"
+                    onClick={() => handleEditClick(shift)}
+                    title="Edit shift"
+                  >
                     {shift.startTime ? format(shift.startTime.toDate(), 'hh:mm a') : '--:--'} → {shift.endTime ? format(shift.endTime.toDate(), 'hh:mm a') : '...'}
                   </td>
                   <td className="px-6 py-4">
-                     <span className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-bold text-sm border border-pink-100">
+                     <span
+                       className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-bold text-sm border border-pink-100 cursor-pointer"
+                       onClick={() => handleEditClick(shift)}
+                       title="Edit shift"
+                     >
                         {shift.netHours ? `${shift.netHours}h` : '-'}
                      </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-3">
-                      <button onClick={() => handleEditClick(shift)} className="w-8 h-8 rounded-full bg-blue-50 text-blue-400 hover:bg-blue-500 hover:text-white transition-all cursor-pointer flex items-center justify-center">
+                      <button onClick={() => handleEditClick(shift)} title="Edit shift" className="w-8 h-8 rounded-full bg-blue-50 text-blue-400 hover:bg-blue-500 hover:text-white transition-all cursor-pointer flex items-center justify-center">
                         <FontAwesomeIcon icon={faPen} size="xs" />
                       </button>
-                      <button onClick={() => { setSelectedShiftId(shift.id); setIsDeleteOpen(true); }} className="w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center justify-center">
+                      <button onClick={() => { setSelectedShiftId(shift.id); setIsDeleteOpen(true); }} title="Delete shift" className="w-8 h-8 rounded-full bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center justify-center">
                         <FontAwesomeIcon icon={faTrash} size="xs" />
                       </button>
-                      <button onClick={() => handleOpenDtr(shift)} className="w-8 h-8 rounded-full bg-purple-50 text-purple-400 hover:bg-purple-500 hover:text-white transition-all cursor-pointer flex items-center justify-center" title="View DTR">
+                      <button onClick={() => handleOpenDtr(shift)} title="View DTR" className="w-8 h-8 rounded-full bg-purple-50 text-purple-400 hover:bg-purple-500 hover:text-white transition-all cursor-pointer flex items-center justify-center">
                         <FontAwesomeIcon icon={faClipboardList} size="xs" />
                       </button>
                     </div>
@@ -426,8 +441,8 @@ function Dashboard({ user, onLogout }) {
                   <p className="text-sm text-gray-600 whitespace-pre-wrap">{entry.description}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleEditDtr(entry)} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-xs font-bold">Edit</button>
-                  <button onClick={() => handleDeleteDtr(entry.id)} className="px-3 py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-bold">Delete</button>
+                  <button onClick={() => handleEditDtr(entry)} title="Edit entry" className="px-3 py-2 rounded-xl bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-xs font-bold">Edit</button>
+                  <button onClick={() => handleDeleteDtr(entry.id)} title="Delete entry" className="px-3 py-2 rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all text-xs font-bold">Delete</button>
                 </div>
               </div>
             ))}
