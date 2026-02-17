@@ -238,7 +238,7 @@ function Dashboard({ user, onLogout }) {
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="font-display font-black text-3xl text-pink-500 tracking-tight">Bunny Portal 🥕</h1>
+            <h1 className="font-display font-black text-3xl text-pink-500 tracking-tight">Bunny Portal1 🥕</h1>
             <p className="text-pink-400 font-reader font-bold">Welcome, {user?.displayName || 'Intern'}</p>
           </div>
           <button onClick={onLogout} title="Log out" className="text-pink-300 hover:text-pink-500 underline text-sm font-bold cursor-pointer font-reader transition-colors">Log out</button>
