@@ -48,6 +48,10 @@ function Dashboard({ user, onLogout }) {
   const [isDtrDeleteOpen, setIsDtrDeleteOpen] = useState(false);
   const [dtrDeleteId, setDtrDeleteId] = useState(null);
 
+  const openNativePicker = (event) => {
+    event?.target?.showPicker?.();
+  };
+
   const GOAL_HOURS = 486;
   const DEADLINE = new Date('2026-05-22');
 
@@ -238,7 +242,7 @@ function Dashboard({ user, onLogout }) {
         {/* Header Section */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="font-display font-black text-3xl text-pink-500 tracking-tight">Bunny Portal1 🥕</h1>
+            <h1 className="font-display font-black text-3xl text-pink-500 tracking-tight">Bunny Portal 🥕</h1>
             <p className="text-pink-400 font-reader font-bold">Welcome, {user?.displayName || 'Intern'}</p>
           </div>
           <button onClick={onLogout} title="Log out" className="text-pink-300 hover:text-pink-500 underline text-sm font-bold cursor-pointer font-reader transition-colors">Log out</button>
@@ -293,26 +297,12 @@ function Dashboard({ user, onLogout }) {
             <tbody className="font-reader divide-y divide-pink-50">
               {shifts.map((shift) => (
                 <tr key={shift.id} className="group hover:bg-white/80 transition-colors">
-                  <td
-                    className="px-6 py-4 text-gray-600 font-bold cursor-pointer"
-                    onClick={() => handleEditClick(shift)}
-                    title="Edit shift"
-                  >
-                    {shift.date}
-                  </td>
-                  <td
-                    className="px-6 py-4 text-gray-400 text-xs font-semibold cursor-pointer"
-                    onClick={() => handleEditClick(shift)}
-                    title="Edit shift"
-                  >
+                  <td className="px-6 py-4 text-gray-600 font-bold">{shift.date}</td>
+                  <td className="px-6 py-4 text-gray-400 text-xs font-semibold">
                     {shift.startTime ? format(shift.startTime.toDate(), 'hh:mm a') : '--:--'} → {shift.endTime ? format(shift.endTime.toDate(), 'hh:mm a') : '...'}
                   </td>
                   <td className="px-6 py-4">
-                     <span
-                       className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-bold text-sm border border-pink-100 cursor-pointer"
-                       onClick={() => handleEditClick(shift)}
-                       title="Edit shift"
-                     >
+                     <span className="bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-bold text-sm border border-pink-100">
                         {shift.netHours ? `${shift.netHours}h` : '-'}
                      </span>
                   </td>
@@ -341,16 +331,16 @@ function Dashboard({ user, onLogout }) {
         <div className="space-y-4 font-reader text-gray-600">
           <div>
             <label className="text-xs font-bold text-pink-400 uppercase ml-2">Date</label>
-            <input type="date" value={editData.date} onChange={(e) => setEditData({...editData, date: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none focus:border-pink-200" />
+            <input type="date" value={editData.date} onClick={openNativePicker} onFocus={openNativePicker} onChange={(e) => setEditData({...editData, date: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none focus:border-pink-200" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-pink-400 uppercase ml-2">In</label>
-              <input type="time" value={editData.startTime} onChange={(e) => setEditData({...editData, startTime: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none" />
+              <input type="time" value={editData.startTime} onClick={openNativePicker} onFocus={openNativePicker} onChange={(e) => setEditData({...editData, startTime: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none" />
             </div>
             <div>
               <label className="text-xs font-bold text-pink-400 uppercase ml-2">Out</label>
-              <input type="time" value={editData.endTime} onChange={(e) => setEditData({...editData, endTime: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none" />
+              <input type="time" value={editData.endTime} onClick={openNativePicker} onFocus={openNativePicker} onChange={(e) => setEditData({...editData, endTime: e.target.value})} className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none" />
             </div>
           </div>
           <div>
@@ -393,6 +383,8 @@ function Dashboard({ user, onLogout }) {
                   <input
                     type="time"
                     value={dtrForm.time}
+                    onClick={openNativePicker}
+                    onFocus={openNativePicker}
                     onChange={(e) => setDtrForm({ ...dtrForm, time: e.target.value })}
                     className="w-full mt-1 p-3 rounded-2xl border-2 border-pink-50 outline-none focus:border-pink-200"
                   />
